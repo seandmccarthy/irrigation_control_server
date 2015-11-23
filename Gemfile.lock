@@ -1,0 +1,25 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    mqtt (0.3.1)
+    rack (1.6.0)
+    rack-protection (1.5.3)
+      rack
+    rufus-scheduler (3.0.9)
+      tzinfo
+    sinatra (1.4.5)
+      rack (~> 1.4)
+      rack-protection (~> 1.4)
+      tilt (~> 1.3, >= 1.3.4)
+    thread_safe (0.3.4)
+    tilt (1.4.1)
+    tzinfo (1.2.2)
+      thread_safe (~> 0.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  mqtt
+  rufus-scheduler
+  sinatra
