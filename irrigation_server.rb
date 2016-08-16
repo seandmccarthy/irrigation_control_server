@@ -3,7 +3,7 @@ require 'mqtt'
 require 'json'
 
 class IrrigationServer < Sinatra::Base
-  set :public_folder, File.dirname(__FILE__) + '/public'
+  set :public_folder, File.dirname(__FILE__) + '/irrigation_frontend/dist'
 
   configure do
     set :station_ids, %w(1 2 3 4)
@@ -14,14 +14,6 @@ class IrrigationServer < Sinatra::Base
     @mqtt_client ||= MQTT::Client.connect(settings.mqtt_broker)
   end
 
-  def station_status(id)
-    topic, message = mqtt_client.get("station/#{id}")
-    message
-  rescue => e
-    puts e.message
-    'N/A'
-  end
-
   def station_data(id)
     {
       id: id,
@@ -30,11 +22,7 @@ class IrrigationServer < Sinatra::Base
     }
   end
 
-  get '/' do
-    erb :index
-  end
-
-  get '/stations' do
+  get '/api/stations' do
     content_type :json
     {
       stations: settings.station_ids.map do |id|
@@ -43,14 +31,20 @@ class IrrigationServer < Sinatra::Base
     }.to_json
   end
 
-  put '/stations/:id' do
+  post '/stations/:id' do
+    params.keys.map {|k| "#{k} = #{params[k]}" }.join("\n")
+    "station #{params['id']} #{params['foo']}\n"
   end
 
-  get '/stations/:id' do |id|
+  get '/api/stations/:id' do |id|
     content_type :json
     {
       station: station_data(id)
     }.to_json
+  end
+
+  get '*' do
+    send_file 'irrigation_frontend/dist/index.html'
   end
 
   run! if app_file == $0

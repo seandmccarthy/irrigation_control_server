@@ -7,11 +7,12 @@ module Irrigation
     def initialize(opts)
       @stations = Array(opts.fetch(:stations))
       @scheduler = opts.fetch(:schedule) { Rufus::Scheduler.new }
+      @status_watcher = StatusWatcher.new(host: opts.fetch(:host))
     end
 
     def start
+      @status_watcher.add_observer(self)
       start_schedules
-      status_poller
     end
 
     def stations
@@ -19,6 +20,12 @@ module Irrigation
         stations: @stations.map { |station| station_json(station) }
       }.to_json
     end
+
+    def update(topic, message)
+      station_for(topic).state = state_for(message)
+    end
+
+    private
 
     def station_json(station)
       {
@@ -60,8 +67,6 @@ module Irrigation
       station.remove_schedule(job_id)
     end
 
-    private
-
     def start_schedules
     end
 
@@ -75,15 +80,6 @@ module Irrigation
         Station::ON
       else
         Station::OFF
-      end
-    end
-
-    def status_poller
-      Thread.new do
-        @client.subscribe('status/#')
-        @client.get do |topic, message|
-          station_for(topic).state = state_for(message)
-        end
       end
     end
   end
