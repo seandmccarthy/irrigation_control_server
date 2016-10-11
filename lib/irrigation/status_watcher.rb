@@ -1,4 +1,3 @@
-require 'mqtt'
 require 'observer'
 
 module Irrigation
@@ -11,8 +10,7 @@ module Irrigation
 
     def run
       @thr = Thread.new do
-        @client.subscribe('status/#')
-        @client.get do |topic, message|
+        @client.get_status do |topic, message|
           changed
           notify_observers(topic, message)
         end

@@ -7,7 +7,7 @@ module Irrigation
     def initialize(opts)
       @stations = Array(opts.fetch(:stations))
       @scheduler = opts.fetch(:schedule) { Rufus::Scheduler.new }
-      @status_watcher = StatusWatcher.new(host: opts.fetch(:host))
+      @status_watcher = opts.fetch(:status_watcher) { StatusWatcher.new }
     end
 
     def start
@@ -19,6 +19,10 @@ module Irrigation
       {
         stations: @stations.map { |station| station_json(station) }
       }.to_json
+    end
+
+    def send_command(station_id, message)
+      @client.publish("command/#{station_id}", message)
     end
 
     def update(topic, message)
