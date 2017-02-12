@@ -7,11 +7,13 @@ module Irrigation
     def initialize(opts)
       @stations = Array(opts.fetch(:stations))
       @scheduler = opts.fetch(:schedule) { Rufus::Scheduler.new }
-      @status_watcher = opts.fetch(:status_watcher) { StatusWatcher.new }
+      @client = opts.fetch(:message_client)
+      @status_watcher = opts.fetch(:status_watcher) { StatusWatcher.new(client: @client) }
     end
 
     def start
       @status_watcher.add_observer(self)
+      @status_watcher.run
       start_schedules
     end
 
@@ -22,11 +24,14 @@ module Irrigation
     end
 
     def send_command(station_id, message)
-      @client.publish("command/#{station_id}", message)
+      @client.send_command(station_id, message)
     end
 
+    # The receiving method for being notified, as an observer
     def update(topic, message)
-      station_for(topic).state = state_for(message)
+      station_for(topic).update message
+    rescue => e
+      puts "error: #{e.message}"
     end
 
     private
@@ -35,8 +40,8 @@ module Irrigation
       {
         id: station.id,
         description: station.description,
-        state: station.state,
-        schedules: station.schedules.map { |s| schedule_json(s) }
+        state: station.state
+        #schedules: station.schedules.map { |s| schedule_json(s) }
       }
     end
 
@@ -77,14 +82,6 @@ module Irrigation
     def station_for(topic)
       _, station_id = topic.split('/')
       get_station_by_id(station_id)
-    end
-
-    def state_for(message)
-      if message.match(/on/i)
-        Station::ON
-      else
-        Station::OFF
-      end
     end
   end
 end
