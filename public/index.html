@@ -1,0 +1,80 @@
+<html>
+  <head>
+    <link rel="stylesheet" type="text/css" href="css/main.css"/>
+  </head>
+  <body>
+    <ul id="stations">
+      <li id="station1">
+        <h1>Station 1</h1>
+        <h2>Front garden</h2>
+        <button class="on">On</button>
+        <button class="off">Off</button>
+      </li>
+      <li id="station2">
+        <h1>Station 2</h1>
+        <h2>Veggie Patch</h2>
+        <button class="on">On</button>
+        <button class="off">Off</button>
+      </li>
+      <li id="station3">
+        <h1>Station 3</h1>
+        <h2>Lilly Pilly</h2>
+        <button class="on">On</button>
+        <button class="off">Off</button>
+      </li>
+      <li id="station4">
+        <h1>Station 4</h1>
+        <h2>Japanese Garden</h2>
+        <button class="on">On</button>
+        <button class="off">Off</button>
+      </li>
+    </ul>
+    <script>
+      window.onload = function(){
+        (function(){
+          var show = function(el){
+            return function(msg){ el.innerHTML = msg + '<br />' + el.innerHTML; }
+          }(document.getElementById('msgs'));
+
+          var ws       = new WebSocket('ws://' + window.location.host + window.location.pathname);
+          ws.onopen    = function()  { show('websocket opened'); };
+          ws.onclose   = function()  { show('websocket closed'); }
+          ws.onmessage = function(m) { show('websocket message: ' +  m.data); };
+
+          var sender = function(f){
+            var input     = document.getElementById('input');
+            input.onclick = function(){ input.value = "" };
+            f.onsubmit    = function(){
+              ws.send(input.value);
+              input.value = "send a message";
+              return false;
+            }
+          }(document.getElementById('form'));
+        })();
+      }
+      var request = new XMLHttpRequest();
+      var commandRequestHandler = function() {
+        if (request.status >= 200 && request.status < 400) {
+          // Success!
+          alert(request.responseText);
+        } else {
+          alert("bad");
+        }
+      };
+      var stationOn = document.querySelector("#station1 button.on");
+      stationOn.addEventListener('click', function(event) {
+        request.open('POST', '/stations/1', true);
+        request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+        request.send('command=on');
+        request.onload = commandRequestHandler;
+      });
+      var stationOff = document.querySelector("#station1 button.off");
+      stationOff.addEventListener('click', function(event) {
+        request.open('POST', '/stations/1', true);
+        request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+        request.send('command=off');
+        request.onload = commandRequestHandler;
+      });
+    </script>
+  </body>
+</html>
