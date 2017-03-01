@@ -10,7 +10,7 @@ module Irrigation
     end
 
     def send_command(station, command)
-      client.publish("command/#{station}", command)
+      client.publish("command/#{station.id}", command)
     end
 
     def get_status(&block)

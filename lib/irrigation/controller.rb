@@ -6,7 +6,7 @@ module Irrigation
 
     def initialize(opts)
       @stations = Array(opts.fetch(:stations))
-      @scheduler = opts.fetch(:schedule) { Rufus::Scheduler.new }
+      @scheduler = opts.fetch(:scheduler) { Rufus::Scheduler.new }
       @client = opts.fetch(:message_client)
       @status_watcher = opts.fetch(:status_watcher) { StatusWatcher.new(client: @client) }
     end
@@ -19,48 +19,30 @@ module Irrigation
 
     def stations
       {
-        stations: @stations.map { |station| station_json(station) }
-      }.to_json
+        stations: @stations.map { |station| station.to_h }
+      }
     end
 
     def send_command(station_id, message)
-      @client.send_command(station_id, message)
+      station = get_station_by_id(station_id)
+      command = Station.state_for(message)
+      @client.send_command(station, command) unless station.nil? || command.nil?
     end
 
     # The receiving method for being notified, as an observer
     def update(topic, message)
       station_for(topic).update message
     rescue => e
-      puts "error: #{e.message}"
+      $stderr.puts "error: #{e.message}"
     end
 
     private
-
-    def station_json(station)
-      {
-        id: station.id,
-        description: station.description,
-        state: station.state
-        #schedules: station.schedules.map { |s| schedule_json(s) }
-      }
-    end
-
-    def schedule_json(schedule)
-      {
-        id: schedule.id,
-        start_hour: schedule.start_hour,
-        start_minute: schedule.start_minute,
-        duration: schedule.duration,
-        days: schedule.days
-      }
-    end
 
     def get_station_by_id(id)
       @stations.find { |station| station.id == id.to_i }
     end
 
     def add_schedule(station, schedule)
-      puts schedule.as_cron_string
       job_id = @scheduler.cron schedule.as_cron_string do
         station.on!
         sleep schedule.duration
