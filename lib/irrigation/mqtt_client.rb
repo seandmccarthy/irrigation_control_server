@@ -21,14 +21,12 @@ module Irrigation
     private
 
     def client
-      reconnect unless @client && @client.connected?
+      connect unless @client && @client.connected?
       @client
     end
 
-    def reconnect
+    def connect
       @client = MQTT::Client.connect(:host => @host, :port => @port)
-    rescue => e
-      # log ?
     end
   end
 end
