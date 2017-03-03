@@ -1,12 +1,9 @@
 require 'minitest/autorun'
 require 'irrigation'
 
-class StatusWatcherTests < Minitest::Test
+class StatusWatcherTests < MiniTest::Unit::TestCase
   class MockClient
-    def subscribe(_)
-    end
-
-    def get
+    def get_status
       yield 'a topic', 'a message'
     end
   end

@@ -1,6 +1,6 @@
 require 'irrigation'
 
-class ScheduleTests < Minitest::Test
+class ScheduleTests < MiniTest::Unit::TestCase
   def test_generate_id
     schedule = Irrigation::Schedule.new(start_hour: 1, duration: 1, days: 1)
     refute_nil schedule.id

@@ -2,41 +2,23 @@ require 'minitest/autorun'
 require 'irrigation'
 require 'yaml'
 
-class StationTests < Minitest::Test
-  class MockClient
-    attr_accessor :state
-
-    def send_command(station, state)
-      @state = state
-    end
+class StationTests < MiniTest::Unit::TestCase
+  def setup
+    @station = Irrigation::Station.new(id: 1)
   end
 
-  def test_on
-    client = MockClient.new
-    station = Irrigation::Station.new(id: 1, client: client)
-    station.on!
-    assert_equal Irrigation::Station::ON, client.state
+  def test_update_for_on_message
+    @station.update('on')
+    assert_equal Irrigation::Station::ON, @station.state
   end
   
-  def test_off
+  def test_update_for_off_message
+    @station.update('off')
+    assert_equal Irrigation::Station::OFF, @station.state
   end
 
-  def test_persistence
-    schedule = Irrigation::Schedule.new(
-      start_minute: 44,
-      start_hour: 10,
-      duration: 20,
-      days: [1,3,5]
-    )
-    station = Irrigation::Station.new(
-      id: 1,
-      schedules: Array(schedule),
-      client: MockClient.new
-    )
-    persisted = YAML::dump(station)
-    station_out = YAML::load(persisted)
-    assert_equal station.id, station_out.id
-    assert_equal 1, station_out.schedules.size
-    assert_equal 10, station_out.schedules.first.start_hour
+  def test_state_is_off_for_unknown_message
+    @station.update('foo')
+    assert_equal Irrigation::Station::OFF, @station.state
   end
 end
