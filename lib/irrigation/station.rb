@@ -23,8 +23,10 @@ module Irrigation
       }
     end
 
-    def self.state_for(message)
-      if message.match(/on/i)
+    private
+
+    def state_for(message)
+      if message.match(/^on/i)
         Station::ON
       else
         Station::OFF
