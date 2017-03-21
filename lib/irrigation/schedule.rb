@@ -1,6 +1,9 @@
+require 'time'
+
 module Irrigation
   class Schedule
-    attr_accessor :id, :start_hour, :start_minute, :duration, :days, :job_id
+    attr_accessor :start_hour, :start_minute, :duration_in_seconds, :days, :job_id
+
     SUNDAY = 0
     MONDAY = 1
     TUESDAY = 2
@@ -9,22 +12,16 @@ module Irrigation
     FRIDAY = 5
     SATURDAY = 6
 
+    def self.create(opts)
+      start = Time.parse(opts.fetch(:start_time))
+      Schedule.new(opts.merge(start_minute: start.minute, start_hour: start.hour))
+    end
+
     def initialize(opts)
-      @id = opts.fetch(:id) { generate_id }
       @start_minute = opts.fetch(:start_minute, 0)
       @start_hour = opts.fetch(:start_hour)
-      @duration = opts.fetch(:duration)
+      @duration_in_seconds = opts.fetch(:duration)
       @days = Array(opts.fetch(:days))
-    end
-
-    def as_cron_string
-      "#{@start_minute} #{@start_hour} * * #{@days.join(',')}"
-    end
-
-    private
-
-    def generate_id
-      DateTime.now.strftime('%Q')
     end
   end
 end

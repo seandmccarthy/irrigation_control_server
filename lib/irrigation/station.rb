@@ -23,8 +23,6 @@ module Irrigation
       }
     end
 
-    private
-
     def state_for(message)
       if message.match(/^on/i)
         Station::ON

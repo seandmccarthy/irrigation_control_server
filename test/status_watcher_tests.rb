@@ -9,14 +9,11 @@ class StatusWatcherTests < MiniTest::Unit::TestCase
   end
 
   class MockObserver
-    attr_reader :notify_count
+    attr_reader :topic, :message
 
-    def initialize
-      @notify_count = 0
-    end
-
-    def update(*args)
-      @notify_count += 1
+    def update(topic, message)
+      @topic = topic
+      @message = message
     end
   end
 
@@ -26,6 +23,7 @@ class StatusWatcherTests < MiniTest::Unit::TestCase
     status_watcher.add_observer(observer)
     status_watcher.run
     status_watcher.stop
-    assert_equal 1, observer.notify_count
+    assert_equal 'a topic', observer.topic
+    assert_equal 'a message', observer.message
   end
 end

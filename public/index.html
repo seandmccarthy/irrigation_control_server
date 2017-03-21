@@ -4,77 +4,96 @@
   </head>
   <body>
     <ul id="stations">
-      <li id="station1">
+      <li id="station1" data="">
         <h1>Station 1</h1>
         <h2>Front garden</h2>
-        <button class="on">On</button>
-        <button class="off">Off</button>
+        <div class="onoffswitch">
+          <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="onoff1">
+          <label class="onoffswitch-label" for="onoff1">
+              <span class="onoffswitch-inner"></span>
+              <span class="onoffswitch-switch"></span>
+          </label>
+        </div>
+        <div class="message"></div>
       </li>
       <li id="station2">
         <h1>Station 2</h1>
         <h2>Veggie Patch</h2>
-        <button class="on">On</button>
-        <button class="off">Off</button>
+        <div class="onoffswitch">
+          <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="onoff2">
+          <label class="onoffswitch-label" for="onoff2">
+              <span class="onoffswitch-inner"></span>
+              <span class="onoffswitch-switch"></span>
+          </label>
+        </div>
+        <div class="message"></div>
       </li>
       <li id="station3">
         <h1>Station 3</h1>
         <h2>Lilly Pilly</h2>
-        <button class="on">On</button>
-        <button class="off">Off</button>
+        <div class="onoffswitch">
+          <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="onoff3">
+          <label class="onoffswitch-label" for="onoff3">
+              <span class="onoffswitch-inner"></span>
+              <span class="onoffswitch-switch"></span>
+          </label>
+        </div>
+        <div class="message"></div>
       </li>
       <li id="station4">
         <h1>Station 4</h1>
         <h2>Japanese Garden</h2>
-        <button class="on">On</button>
-        <button class="off">Off</button>
+        <div class="onoffswitch">
+          <input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="onoff4">
+          <label class="onoffswitch-label" for="onoff4">
+              <span class="onoffswitch-inner"></span>
+              <span class="onoffswitch-switch"></span>
+          </label>
+        </div>
+        <div class="message"></div>
       </li>
     </ul>
     <script>
-      window.onload = function(){
-        (function(){
-          var show = function(el){
-            return function(msg){ el.innerHTML = msg + '<br />' + el.innerHTML; }
-          }(document.getElementById('msgs'));
-
-          var ws       = new WebSocket('ws://' + window.location.host + window.location.pathname);
-          ws.onopen    = function()  { show('websocket opened'); };
-          ws.onclose   = function()  { show('websocket closed'); }
-          ws.onmessage = function(m) { show('websocket message: ' +  m.data); };
-
-          var sender = function(f){
-            var input     = document.getElementById('input');
-            input.onclick = function(){ input.value = "" };
-            f.onsubmit    = function(){
-              ws.send(input.value);
-              input.value = "send a message";
-              return false;
-            }
-          }(document.getElementById('form'));
-        })();
+      var statusRequest = new XMLHttpRequest();
+      var statusRequestHandler = function() {
+        if (statusRequest.status >= 200 && statusRequest.status < 400) {
+          var resp = JSON.parse(statusRequest.responseText);
+          for (station of resp.stations) {
+            document.querySelector("#station" + station.id + " .onoffswitch-checkbox").checked = resp.stations[station.id - 1].state == 'on';
+          }
+        }
+      };
+      function basicPoller() {
+        statusRequest.open('GET', '/status', true);
+        statusRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+        statusRequest.onload = statusRequestHandler;
+        statusRequest.onerror = errorHandler
+        statusRequest.send(null);
+        setTimeout(basicPoller, 2000); 
       }
       var request = new XMLHttpRequest();
       var commandRequestHandler = function() {
         if (request.status >= 200 && request.status < 400) {
           // Success!
-          alert(request.responseText);
         } else {
-          alert("bad");
+          alert(request.status);
         }
       };
-      var stationOn = document.querySelector("#station1 button.on");
-      stationOn.addEventListener('click', function(event) {
-        request.open('POST', '/stations/1', true);
-        request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-        request.send('command=on');
-        request.onload = commandRequestHandler;
-      });
-      var stationOff = document.querySelector("#station1 button.off");
-      stationOff.addEventListener('click', function(event) {
-        request.open('POST', '/stations/1', true);
-        request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-        request.send('command=off');
-        request.onload = commandRequestHandler;
-      });
+      var errorHandler = function() {
+      }
+      window.onload = function(){
+        var onoffs = document.querySelectorAll(".onoffswitch-checkbox");
+        for (var i = 0; i < onoffs.length; i++) {
+          onoffs[i].addEventListener('change', function(event) {
+            request.open('POST', '/stations/1', true);
+            request.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
+            request.onload = commandRequestHandler;
+            request.onerror = errorHandler
+            request.send('command=' + (event.target.checked ? 'on' : 'off'));
+          });
+        }
+        setTimeout(basicPoller, 2000); 
+      };
     </script>
   </body>
 </html>

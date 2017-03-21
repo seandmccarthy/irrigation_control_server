@@ -25,7 +25,7 @@ module Irrigation
 
     def send_command(station_id, message)
       station = get_station_by_id(station_id)
-      command = Station.state_for(message)
+      command = station.state_for(message)
       @client.send_command(station, command) unless station.nil? || command.nil?
     end
 
@@ -40,17 +40,6 @@ module Irrigation
 
     def get_station_by_id(id)
       @stations.find { |station| station.id == id.to_i }
-    end
-
-    def add_schedule(station, schedule)
-      job_id = @scheduler.cron schedule.as_cron_string do
-        station.on!
-        sleep schedule.duration
-        station.off!
-      end
-      schedule.job_id = job_id
-      station.add_schedule(schedule)
-      #persist_schedules(station)
     end
 
     def remove_schedule(station, job_id)
